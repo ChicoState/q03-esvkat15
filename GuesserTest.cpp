@@ -35,6 +35,13 @@ TEST(GuesserTest, simple_correct_pw_empty)
   ASSERT_TRUE( object.match("") );
 }
 
+// simple correct password check
+TEST(GuesserTest, simple_incorrect_pw_empty)
+{
+  Guesser object("");
+  ASSERT_FALSE( object.match("frog") );
+}
+
 // simple correct password check with truncation
 TEST(GuesserTest, simple_correct_pw_trunc)
 {
@@ -82,6 +89,62 @@ TEST(GuesserTest, simple_incorrect_pw_1len_mistake2)
 {
   Guesser object("SecretSecret");
   ASSERT_FALSE( object.match("SecretSecrett") );
+}
+
+// 2 character difference test, 2 less
+TEST(GuesserTest, simple_incorrect_pw_2len_mistake1)
+{
+  Guesser object("SecretSecret");
+  ASSERT_FALSE( object.match("SecretSecr") );
+}
+
+// 2 character difference test, 2 more
+TEST(GuesserTest, simple_incorrect_pw_2len_mistake2)
+{
+  Guesser object("SecretSecret");
+  ASSERT_FALSE( object.match("SecretSecrett%") );
+}
+
+// 2 character difference test, 1 ch 1 less
+TEST(GuesserTest, simple_incorrect_pw_1ch_1len_mistake1)
+{
+  Guesser object("SecretSecret");
+  ASSERT_FALSE( object.match("Secre1Secre") );
+}
+
+// 2 character difference test, 1 ch 1 more
+TEST(GuesserTest, simple_incorrect_pw_1ch_1len_mistake2)
+{
+  Guesser object("SecretSecret");
+  ASSERT_FALSE( object.match("Secret5ecret%") );
+}
+
+// 3 character difference test, 3 less
+TEST(GuesserTest, simple_incorrect_pw_3len_mistake1)
+{
+  Guesser object("SecretSecret");
+  ASSERT_FALSE( object.match("SecretSec") );
+}
+
+// 3 character difference test, 3 more
+TEST(GuesserTest, simple_incorrect_pw_3len_mistake2)
+{
+  Guesser object("SecretSecret");
+  ASSERT_FALSE( object.match("SecretSecrett%5") );
+}
+
+// 3 character difference test, 2 more, 1 change
+TEST(GuesserTest, simple_incorrect_pw_1ch_2len_mistake2)
+{
+  Guesser object("SecretSecret");
+  ASSERT_FALSE( object.match("SecretSeCret%5") );
+}
+
+// 3 character difference test, 1 more, 2 change
+TEST(GuesserTest, simple_incorrect_pw_2ch_1len_mistake)
+{
+  Guesser object("SecretSecret");
+  ASSERT_FALSE( object.match("Secre5SeCret5") );
 }
 
 // length difference test, 100 more
@@ -207,13 +270,23 @@ TEST(GuesserTest, simple_remaining_pw_1guess_1far)
   ASSERT_EQ( object.remaining(), 1 );
 }
 
-// remaining test with 3 far guesses
+// remaining test with 2 close guesses then 1 far guess
 TEST(GuesserTest, simple_remaining_pw_2guess_1far)
 {
   Guesser object("SecretSecret");
   object.match("SecretSecre");
   object.match("SecretSecrett");
   object.match("SecreTSecreTt");
+  ASSERT_EQ( object.remaining(), 0 );
+}
+
+// remaining test with 1 far guess then 2 close guesses
+TEST(GuesserTest, simple_remaining_pw_1far_2guess)
+{
+  Guesser object("SecretSecret");
+  object.match("SecreTSecre5t");
+  object.match("SecretSecre");
+  object.match("SecretSecrett");
   ASSERT_EQ( object.remaining(), 0 );
 }
 
@@ -225,4 +298,66 @@ TEST(GuesserTest, remaining_pw_fake_reset_test)
   object.match("SecreTsecrett");
   object.match("SecretSecret");
   ASSERT_EQ( object.remaining(), 0 );
+}
+
+// match test with 1 far guess
+TEST(GuesserTest, simple_match_pw_1far)
+{
+  Guesser object("SecretSecret");
+  ASSERT_FALSE( object.match("SecreTsecrett") );
+}
+
+// match test with 1 far guess then 1 close guess
+TEST(GuesserTest, simple_match_pw_1far_1guess)
+{
+  Guesser object("SecretSecret");
+  object.match("SecretSeC#ett");
+  ASSERT_FALSE( object.match("SecretSecre") );
+}
+
+// match test with 1 close guess then 1 far guess
+TEST(GuesserTest, simple_match_pw_1guess_1far)
+{
+  Guesser object("SecretSecret");
+  object.match("secretSecret");
+  ASSERT_FALSE( object.match("SecREtSecre") );
+}
+
+// match test with 2 close guesses then 1 far guess
+TEST(GuesserTest, simple_match_pw_2guess_1far)
+{
+  Guesser object("SecretSecret");
+  object.match("SecretSecre");
+  object.match("SecretSecrett");
+  ASSERT_FALSE( object.match("SecreTSecreTt") );
+}
+
+// match test with 1 far guess then 2 close guesses
+TEST(GuesserTest, simple_match_pw_1far_2guess)
+{
+  Guesser object("SecretSecret");
+  object.match("SecreTSecre5t");
+  object.match("SecretSecre");
+  ASSERT_FALSE( object.match("SecretSecrett") );
+}
+
+// test that guesses do not match on a brute force
+TEST(GuesserTest, match_pw_fake_reset_test1)
+{
+  Guesser object("SecretSecret");
+  object.match("SecretSecre");
+  object.match("SecreTsecrett");
+  ASSERT_FALSE( object.match("SecretSecret") );
+}
+
+// test that guesses do not match on a brute force
+TEST(GuesserTest, match_pw_fake_reset_test2)
+{
+  Guesser object("SecretSecret");
+  object.match("SecretSecre");
+  object.match("SecreTsecrett");
+  object.match("SecretSecret");
+  object.match("SecreTsecrett");
+  object.match("SecretSecre");
+  ASSERT_FALSE( object.match("SecretSecret") );
 }
